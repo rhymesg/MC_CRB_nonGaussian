@@ -1,0 +1,579 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>estimateFIM</title><meta name="generator" content="MATLAB 7.12"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-10-09"><meta name="DC.source" content="estimateFIM.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% estimateFIM.m: Estimation of FIM per Spall 2005 and Das et al 2010 (citation detail</span>
+<span class="comment">%   below).</span>
+<span class="comment">%</span>
+<span class="comment">% *************************************************************************</span>
+<span class="comment">%</span>
+<span class="comment">%   This file and the supporting matlab files can be found at</span>
+<span class="comment">%       http://lotus.eng.buffalo.edu/Sonjoy_Das/Software.html</span>
+<span class="comment">%</span>
+<span class="comment">%   Written by  Sonjoy Das, sonjoy@buffalo.edu</span>
+<span class="comment">%               The Johns Hopkins University</span>
+<span class="comment">%               January, 2007</span>
+<span class="comment">%               [Currently, at University at Buffalo]</span>
+<span class="comment">%</span>
+<span class="comment">%   Please cite my following work if you use this file:</span>
+<span class="comment">%       Sonjoy Das, James C. Spall, and Roger Ghanem, ``Efficient Monte</span>
+<span class="comment">%       Carlo computation of Fisher information matrix using prior</span>
+<span class="comment">%       information,'' Computational Statistics and Data Analysis, v. 54,</span>
+<span class="comment">%       no. 2, pp. 272&#150;289, 2010, doi:10.1016/j.csda.2009.09.018.</span>
+<span class="comment">%</span>
+<span class="comment">%   If you find any bugs, please send me an e-mail.</span>
+<span class="comment">%</span>
+<span class="comment">%   USAGE:</span>
+<span class="comment">%       1. Input your problem data in inputfile.m (the data in this file is</span>
+<span class="comment">%           shown for Example 1 of Das et. al. 2010).</span>
+<span class="comment">%       2. Compute the log-likelihood function in loglikelihood.m (the</span>
+<span class="comment">%           provided function loglikelihood.m is shown for Example 1 of Das</span>
+<span class="comment">%           et. al. 2010; edit loglikelihood_user.m to create your own).</span>
+<span class="comment">%       3. Compute the gradient vector in gradvec.m (the provided function</span>
+<span class="comment">%           gradvec.m is shown for Example 1 of Das et. al. 2010; edit</span>
+<span class="comment">%           gradvec_user.m to create your own).</span>
+<span class="comment">%       4. Generate Zpseudo data vector according to your distribution (see</span>
+<span class="comment">%           generateZpseudo.m shown for Example 1 of Das et. al. 2010).</span>
+<span class="comment">%</span>
+<span class="comment">% ... you're ready to estimate the FIM. Now, just type estimateFIM at the</span>
+<span class="comment">%      MATLAB prompt.</span>
+<span class="comment">% *************************************************************************</span>
+<span class="comment">%</span>
+inputfile <span class="comment">% Input file (use data for Example 1 of Das et al 2010).</span>
+<span class="comment">%</span>
+<span class="comment">% Initialization</span>
+HhatLbar = zeros(p,p); <span class="comment">% Per Spall 2005</span>
+<span class="keyword">switch</span> lower(measurement)
+    <span class="keyword">case</span> <span class="string">'both'</span>
+        Hhatgbar = zeros(p,p); <span class="comment">% Per Spall 2005</span>
+<span class="keyword">end</span>
+<span class="keyword">switch</span> lower(scheme)
+    <span class="keyword">case</span> <span class="string">'das2010'</span>
+        HtldeLbar = zeros(p,p); <span class="comment">% Per Das et al 2010</span>
+        <span class="keyword">switch</span> lower(measurement)
+            <span class="keyword">case</span> <span class="string">'both'</span>
+                Htldegbar = zeros(p,p); <span class="comment">% Per Das et al 2010</span>
+        <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%</span>
+fprintf([<span class="string">'\nEstimating FIM estimates by using Spall 2005 and Das et al 2010...\n'</span>])
+<span class="comment">%</span>
+<span class="keyword">for</span> iN = 1:1:N
+	generateZpseudo <span class="comment">% Generate pseudo data according to given distribution</span>
+                    <span class="comment">% (see generateZpseudo.m for Example 1 of Das et al 2010)</span>
+	<span class="comment">%</span>
+	Delk=2*round(rand(p,1))-1;
+	Delk_tlde=2*round(rand(p,1))-1;
+	<span class="comment">%</span>
+	<span class="comment">%%%% Estimation of FIM based on log-likelihood measurements %%%%</span>
+	thetpp = thet + (c_tlde*Delk_tlde) + (c*Delk);
+	thetp = thet + (c*Delk);
+	G1plus = (1/c_tlde)*(loglikelihood(thetpp,Zpseudo)- <span class="keyword">...</span>
+        loglikelihood(thetp,Zpseudo))*(1./Delk_tlde); <span class="comment">% Calling loglikelihood.m</span>
+	<span class="comment">%</span>
+	thetpm = thet + (c_tlde*Delk_tlde) - (c*Delk);
+	thetm = thet - (c*Delk);
+	G1minus = (1/c_tlde)*(loglikelihood(thetpm,Zpseudo)- <span class="keyword">...</span>
+        loglikelihood(thetm,Zpseudo))*(1./Delk_tlde); <span class="comment">% Calling loglikelihood.m</span>
+	<span class="comment">%</span>
+	JhatL = (1/(2*c))*(G1plus - G1minus)*(1./Delk)'; <span class="comment">% Jacobian estimate</span>
+                    <span class="comment">% based on log-likelihood measurements by using Spall 2005</span>
+	<span class="comment">%</span>
+	Hhat0L = (1/2)*(JhatL+JhatL'); <span class="comment">% Hessian estimate based on</span>
+                    <span class="comment">% log-likelihood measurements by using Spall 2005.</span>
+	<span class="comment">%</span>
+	<span class="keyword">switch</span> lower(scheme)
+            <span class="keyword">case</span> <span class="string">'das2010'</span>
+                Dk = Delk*(1./Delk)';
+                Dk_tlde = Delk_tlde*(1./Delk_tlde)';
+                <span class="comment">%</span>
+                JtldeL = JhatL - (Dk_tlde'*(-Fgvn)*Dk); <span class="comment">% Jacobian estimate</span>
+                    <span class="comment">% based on log-likelihood measurements by using Das et</span>
+                    <span class="comment">% al 2010</span>
+                    <span class="comment">%</span>
+                Htlde0L = (1/2)*(JtldeL+JtldeL'); <span class="comment">% Estimate of H_k0 based</span>
+                    <span class="comment">% on log-likelihood measurements by using Das et al</span>
+                    <span class="comment">% 2010.</span>
+	<span class="keyword">end</span>
+	<span class="comment">%</span>
+	<span class="comment">%%%% Estimation of FIM based on gradient vector measurements %%%%</span>
+	<span class="keyword">switch</span> lower(measurement)
+            <span class="keyword">case</span> <span class="string">'both'</span>
+                thetp = thet + (c*Delk);
+                thetm = thet - (c*Delk);
+                gplus = gradvec(thetp,Zpseudo); <span class="comment">% Calling gradvec.m</span>
+                gminus = gradvec(thetm,Zpseudo); <span class="comment">% Calling gradvec.m</span>
+                <span class="comment">%</span>
+                Jhatg = (1/(2*c))*(gplus - gminus)*(1./Delk)'; <span class="comment">% Jacobian</span>
+                    <span class="comment">% estimate based on gradient vector measurements by</span>
+                    <span class="comment">% using Spall 2005.</span>
+                <span class="comment">%</span>
+                Hhat0g = (1/2)*(Jhatg+Jhatg'); <span class="comment">% Hessian estimate based on</span>
+                    <span class="comment">% gradient vector measurements by using Spall 2005.</span>
+                <span class="comment">%</span>
+                <span class="keyword">switch</span> lower(scheme)
+                        <span class="keyword">case</span> <span class="string">'das2010'</span>
+                            Jtldeg = Jhatg - (-Fgvn*Dk); <span class="comment">% Jacobian estimate</span>
+                                <span class="comment">% based on gradient vector measurements by</span>
+                                <span class="comment">% using Das et al 2010.</span>
+                                <span class="comment">%</span>
+                            Htlde0g = (1/2)*(Jtldeg+Jtldeg'); <span class="comment">% Estimate of</span>
+                                <span class="comment">% H_k0 based on gradient vector</span>
+                                <span class="comment">% measurements by using Das et al 2010.</span>
+                <span class="keyword">end</span>
+	<span class="keyword">end</span>
+    <span class="comment">%</span>
+    <span class="comment">%</span>
+    HhatL = Hhat0L;
+    <span class="keyword">switch</span> lower(measurement)
+        <span class="keyword">case</span> <span class="string">'both'</span>
+            Hhatg = Hhat0g;
+    <span class="keyword">end</span>
+    <span class="keyword">switch</span> lower(scheme)
+        <span class="keyword">case</span> <span class="string">'das2010'</span>
+            HtldeL = Htlde0L;
+            <span class="keyword">switch</span> lower(measurement)
+                <span class="keyword">case</span> <span class="string">'both'</span>
+                    Htldeg = Htlde0g;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%%%% Substitution of negative of the known elements of FIM into</span>
+            <span class="comment">%%%% the Hessian estimates based on modified algorithm</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+            <span class="keyword">for</span> iK = 1:1:length(KnwnFIMindex(:,1))
+                irow = KnwnFIMindex(iK,1);
+                jcol = KnwnFIMindex(iK,2);
+                <span class="keyword">switch</span> lower(NaiveSubstitution)
+                    <span class="keyword">case</span> <span class="string">'yes'</span>
+                        <span class="comment">% Naive approach: prior information is also used</span>
+                        <span class="comment">% in Spall 2005</span>
+                        HhatL(irow,jcol) = -Fgvn(irow,jcol);
+                        HhatL(jcol,irow) = HhatL(irow,jcol);
+                <span class="keyword">end</span>
+                HtldeL(irow,jcol) = -Fgvn(irow,jcol); <span class="comment">% Das et al 2010</span>
+                <span class="keyword">switch</span> lower(measurement)
+                    <span class="keyword">case</span> <span class="string">'both'</span>
+                        <span class="keyword">switch</span> lower(NaiveSubstitution)
+                            <span class="keyword">case</span> <span class="string">'yes'</span>
+                                <span class="comment">% Naive approach: prior information is also</span>
+                                <span class="comment">% used in Spall 2005</span>
+                                Hhatg(irow,jcol) = -Fgvn(irow,jcol);
+                                Hhatg(jcol,irow) = Hhatg(irow,jcol);
+                        <span class="keyword">end</span>
+                        Htldeg(irow,jcol) = -Fgvn(irow,jcol); <span class="comment">% Das et al 2010</span>
+                        Htldeg(jcol,irow) = Htldeg(irow,jcol); <span class="comment">% Das et al 2010</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%</span>
+    HhatLbar = (((iN-1)/iN)*HhatLbar) + ((1/iN)*HhatL);
+    <span class="keyword">switch</span> lower(measurement)
+        <span class="keyword">case</span> <span class="string">'both'</span>
+            Hhatgbar = (((iN-1)/iN)*Hhatgbar) + ((1/iN)*Hhatg);
+    <span class="keyword">end</span>
+    <span class="keyword">switch</span> lower(scheme)
+        <span class="keyword">case</span> <span class="string">'das2010'</span>
+            HtldeLbar = (((iN-1)/iN)*HtldeLbar) + ((1/iN)*HtldeL);
+            <span class="keyword">switch</span> lower(measurement)
+                <span class="keyword">case</span> <span class="string">'both'</span>
+                    Htldegbar = (((iN-1)/iN)*Htldegbar) + ((1/iN)*Htldeg);
+            <span class="keyword">end</span>
+    <span class="keyword">end</span>
+	<span class="comment">%</span>
+    <span class="comment">%%%%%%%%%%%%%%</span>
+    FhatL = -HhatLbar;
+<span class="comment">% 	if min(eig(FhatL)) &lt; 0; FhatL = sqrtm(FhatL*FhatL);end</span>
+    <span class="keyword">switch</span> lower(measurement)
+        <span class="keyword">case</span> <span class="string">'both'</span>
+            Fhatg = -Hhatgbar;
+<span class="comment">%             if min(eig(Fhatg)) &lt; 0; Fhatg = sqrtm(Fhatg*Fhatg);end</span>
+    <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">switch</span> lower(scheme)
+        <span class="keyword">case</span> <span class="string">'das2010'</span>
+            FtldeL = -HtldeLbar;
+<span class="comment">%             if min(eig(FtldeL)) &lt; 0; FtldeL = sqrtm(FtldeL*FtldeL);end</span>
+            <span class="keyword">switch</span> lower(measurement)
+                <span class="keyword">case</span> <span class="string">'both'</span>
+                    Ftldeg = -Htldegbar;
+<span class="comment">%                     if min(eig(Ftldeg)) &lt; 0; Ftldeg = sqrtm(Ftldeg*Ftldeg);end</span>
+            <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%</span>
+<span class="keyword">end</span> <span class="comment">% End of for iN = 1:1:N</span>
+<span class="comment">%</span>
+fprintf([<span class="string">'\nFhatL: The FIM estimate based on log-likelihood '</span><span class="keyword">...</span>
+    <span class="string">'measurements by using Spall 2005.\n'</span>]), FhatL
+<span class="keyword">switch</span> lower(measurement)
+    <span class="keyword">case</span> <span class="string">'both'</span>
+        fprintf([<span class="string">'\nFhatg: The FIM estimate based on gradient vector '</span><span class="keyword">...</span>
+            <span class="string">'measurements by using Spall 2005.\n'</span>]), Fhatg
+<span class="keyword">end</span>
+<span class="keyword">switch</span> lower(scheme)
+	<span class="keyword">case</span> <span class="string">'das2010'</span>
+        fprintf([<span class="string">'\nFtldeL: The FIM estimate based on log-likelihood '</span><span class="keyword">...</span>
+            <span class="string">'measurements by using Das et al 2010.\n'</span>]), FtldeL
+        <span class="keyword">switch</span> lower(measurement)
+            <span class="keyword">case</span> <span class="string">'both'</span>
+                fprintf([<span class="string">'\nFtldeg: The FIM estimate based on gradient vector '</span><span class="keyword">...</span>
+                    <span class="string">'measurements by using Das et al 2010.\n'</span>]), Ftldeg
+        <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">This is an extension of Example 13.7 in ISSO. In this problem, theta = (mu, sigma^2,alpha), 
+where q_i = q_i(alpha) for all i. It is considered here q_i(alpha) = (c_i)(alpha),
+where the c_i are some non-negative constants and alpha &gt; 0. Different values of 
+c_i across i are required to generate a full rank F.
+
+dim(theta) = p = 3,
+Number of data = n = 30,
+Number of pseudodata vector = N = 1000,
+
+theta(1) = mu = 0,
+theta(2) = variance = 1,
+theta(3) = alpha = 1.
+
+The value of c in (Bernoulli +/- c) for Delta: 0.0001
+The value of tilde{c} in (Bernoulli +/- tilde{c}) for tilde{Delta}: 0.00011
+
+Computing the analytical FIM...
+
+Eigenvalues the analytical FIM:
+
+ans =
+
+    0.5466
+    8.7517
+   20.9004
+
+
+The known elements of the FIM.
+
+Fgvn =
+
+   20.9004         0         0
+         0    7.5994         0
+         0         0         0
+
+
+Estimating FIM estimates by using Spall 2005 and Das et al 2010...
+
+FhatL: The FIM estimate based on log-likelihood measurements by using Spall 2005.
+
+FhatL =
+
+   20.6170   -0.6096   -0.4288
+   -0.6096    7.1443    2.8675
+   -0.4288    2.8675    1.1888
+
+
+Fhatg: The FIM estimate based on gradient vector measurements by using Spall 2005.
+
+Fhatg =
+
+   20.9130   -0.6753   -0.1488
+   -0.6753    7.2657    2.5476
+   -0.1488    2.5476    1.4758
+
+
+FtldeL: The FIM estimate based on log-likelihood measurements by using Das et al 2010.
+
+FtldeL =
+
+   20.9004         0   -0.0697
+   -0.0966    7.5994    2.7022
+   -0.0697    2.7022    1.6790
+
+
+Ftldeg: The FIM estimate based on gradient vector measurements by using Das et al 2010.
+
+Ftldeg =
+
+   20.9004         0   -0.2115
+         0    7.5994    2.6920
+   -0.2115    2.6920    1.4758
+
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.12<br></p></div><!--
+##### SOURCE BEGIN #####
+% estimateFIM.m: Estimation of FIM per Spall 2005 and Das et al 2010 (citation detail
+%   below).
+%
+% *************************************************************************
+%         
+%   This file and the supporting matlab files can be found at
+%       http://lotus.eng.buffalo.edu/Sonjoy_Das/Software.html
+%   
+%   Written by  Sonjoy Das, sonjoy@buffalo.edu
+%               The Johns Hopkins University
+%               January, 2007
+%               [Currently, at University at Buffalo]
+%
+%   Please cite my following work if you use this file:
+%       Sonjoy Das, James C. Spall, and Roger Ghanem, ``Efficient Monte
+%       Carlo computation of Fisher information matrix using prior
+%       information,'' Computational Statistics and Data Analysis, v. 54,
+%       no. 2, pp. 272289, 2010, doi:10.1016/j.csda.2009.09.018.
+%
+%   If you find any bugs, please send me an e-mail.
+%
+%   USAGE:
+%       1. Input your problem data in inputfile.m (the data in this file is
+%           shown for Example 1 of Das et. al. 2010).
+%       2. Compute the log-likelihood function in loglikelihood.m (the
+%           provided function loglikelihood.m is shown for Example 1 of Das
+%           et. al. 2010; edit loglikelihood_user.m to create your own).
+%       3. Compute the gradient vector in gradvec.m (the provided function
+%           gradvec.m is shown for Example 1 of Das et. al. 2010; edit
+%           gradvec_user.m to create your own).
+%       4. Generate Zpseudo data vector according to your distribution (see
+%           generateZpseudo.m shown for Example 1 of Das et. al. 2010).
+%
+% ... you're ready to estimate the FIM. Now, just type estimateFIM at the
+%      MATLAB prompt.
+% *************************************************************************
+%
+inputfile % Input file (use data for Example 1 of Das et al 2010).
+%
+% Initialization
+HhatLbar = zeros(p,p); % Per Spall 2005
+switch lower(measurement)
+    case 'both'
+        Hhatgbar = zeros(p,p); % Per Spall 2005 
+end
+switch lower(scheme)
+    case 'das2010'
+        HtldeLbar = zeros(p,p); % Per Das et al 2010
+        switch lower(measurement)
+            case 'both'
+                Htldegbar = zeros(p,p); % Per Das et al 2010
+        end
+end
+%
+fprintf(['\nEstimating FIM estimates by using Spall 2005 and Das et al 2010...\n'])
+%
+for iN = 1:1:N
+	generateZpseudo % Generate pseudo data according to given distribution 
+                    % (see generateZpseudo.m for Example 1 of Das et al 2010)
+	%
+	Delk=2*round(rand(p,1))-1;
+	Delk_tlde=2*round(rand(p,1))-1;
+	%
+	%%%% Estimation of FIM based on log-likelihood measurements %%%%
+	thetpp = thet + (c_tlde*Delk_tlde) + (c*Delk);
+	thetp = thet + (c*Delk);
+	G1plus = (1/c_tlde)*(loglikelihood(thetpp,Zpseudo)- ...
+        loglikelihood(thetp,Zpseudo))*(1./Delk_tlde); % Calling loglikelihood.m
+	%
+	thetpm = thet + (c_tlde*Delk_tlde) - (c*Delk);
+	thetm = thet - (c*Delk);
+	G1minus = (1/c_tlde)*(loglikelihood(thetpm,Zpseudo)- ...
+        loglikelihood(thetm,Zpseudo))*(1./Delk_tlde); % Calling loglikelihood.m
+	%
+	JhatL = (1/(2*c))*(G1plus - G1minus)*(1./Delk)'; % Jacobian estimate
+                    % based on log-likelihood measurements by using Spall 2005
+	%
+	Hhat0L = (1/2)*(JhatL+JhatL'); % Hessian estimate based on 
+                    % log-likelihood measurements by using Spall 2005.
+	%
+	switch lower(scheme)
+            case 'das2010'
+                Dk = Delk*(1./Delk)';
+                Dk_tlde = Delk_tlde*(1./Delk_tlde)';
+                %
+                JtldeL = JhatL - (Dk_tlde'*(-Fgvn)*Dk); % Jacobian estimate
+                    % based on log-likelihood measurements by using Das et
+                    % al 2010
+                    %
+                Htlde0L = (1/2)*(JtldeL+JtldeL'); % Estimate of H_k0 based
+                    % on log-likelihood measurements by using Das et al
+                    % 2010.
+	end
+	%
+	%%%% Estimation of FIM based on gradient vector measurements %%%%
+	switch lower(measurement)
+            case 'both'
+                thetp = thet + (c*Delk);
+                thetm = thet - (c*Delk);
+                gplus = gradvec(thetp,Zpseudo); % Calling gradvec.m
+                gminus = gradvec(thetm,Zpseudo); % Calling gradvec.m
+                %
+                Jhatg = (1/(2*c))*(gplus - gminus)*(1./Delk)'; % Jacobian 
+                    % estimate based on gradient vector measurements by
+                    % using Spall 2005.
+                %
+                Hhat0g = (1/2)*(Jhatg+Jhatg'); % Hessian estimate based on 
+                    % gradient vector measurements by using Spall 2005.
+                %
+                switch lower(scheme)
+                        case 'das2010'
+                            Jtldeg = Jhatg - (-Fgvn*Dk); % Jacobian estimate
+                                % based on gradient vector measurements by
+                                % using Das et al 2010.
+                                %
+                            Htlde0g = (1/2)*(Jtldeg+Jtldeg'); % Estimate of
+                                % H_k0 based on gradient vector
+                                % measurements by using Das et al 2010.
+                end
+	end
+    %
+    %
+    HhatL = Hhat0L;
+    switch lower(measurement)
+        case 'both' 
+            Hhatg = Hhat0g;
+    end
+    switch lower(scheme)
+        case 'das2010'
+            HtldeL = Htlde0L;
+            switch lower(measurement)
+                case 'both'
+                    Htldeg = Htlde0g;
+            end
+            %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%% Substitution of negative of the known elements of FIM into 
+            %%%% the Hessian estimates based on modified algorithm
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            for iK = 1:1:length(KnwnFIMindex(:,1))
+                irow = KnwnFIMindex(iK,1);
+                jcol = KnwnFIMindex(iK,2);
+                switch lower(NaiveSubstitution)
+                    case 'yes'
+                        % Naive approach: prior information is also used
+                        % in Spall 2005
+                        HhatL(irow,jcol) = -Fgvn(irow,jcol);
+                        HhatL(jcol,irow) = HhatL(irow,jcol);
+                end
+                HtldeL(irow,jcol) = -Fgvn(irow,jcol); % Das et al 2010
+                switch lower(measurement)
+                    case 'both' 
+                        switch lower(NaiveSubstitution)
+                            case 'yes'
+                                % Naive approach: prior information is also
+                                % used in Spall 2005
+                                Hhatg(irow,jcol) = -Fgvn(irow,jcol);
+                                Hhatg(jcol,irow) = Hhatg(irow,jcol);
+                        end
+                        Htldeg(irow,jcol) = -Fgvn(irow,jcol); % Das et al 2010
+                        Htldeg(jcol,irow) = Htldeg(irow,jcol); % Das et al 2010
+                end
+            end
+    end
+    %
+    HhatLbar = (((iN-1)/iN)*HhatLbar) + ((1/iN)*HhatL);
+    switch lower(measurement)
+        case 'both' 
+            Hhatgbar = (((iN-1)/iN)*Hhatgbar) + ((1/iN)*Hhatg);
+    end
+    switch lower(scheme)
+        case 'das2010'
+            HtldeLbar = (((iN-1)/iN)*HtldeLbar) + ((1/iN)*HtldeL);
+            switch lower(measurement)
+                case 'both'
+                    Htldegbar = (((iN-1)/iN)*Htldegbar) + ((1/iN)*Htldeg);
+            end
+    end
+	%
+    %%%%%%%%%%%%%%
+    FhatL = -HhatLbar;
+% 	if min(eig(FhatL)) < 0; FhatL = sqrtm(FhatL*FhatL);end
+    switch lower(measurement)
+        case 'both'
+            Fhatg = -Hhatgbar;
+%             if min(eig(Fhatg)) < 0; Fhatg = sqrtm(Fhatg*Fhatg);end
+    end
+	%%%
+    switch lower(scheme)
+        case 'das2010'
+            FtldeL = -HtldeLbar;
+%             if min(eig(FtldeL)) < 0; FtldeL = sqrtm(FtldeL*FtldeL);end
+            switch lower(measurement)
+                case 'both'
+                    Ftldeg = -Htldegbar;
+%                     if min(eig(Ftldeg)) < 0; Ftldeg = sqrtm(Ftldeg*Ftldeg);end
+            end
+    end
+    %
+end % End of for iN = 1:1:N
+%
+fprintf(['\nFhatL: The FIM estimate based on log-likelihood '...
+    'measurements by using Spall 2005.\n']), FhatL
+switch lower(measurement)
+    case 'both'
+        fprintf(['\nFhatg: The FIM estimate based on gradient vector '...
+            'measurements by using Spall 2005.\n']), Fhatg
+end
+switch lower(scheme)
+	case 'das2010'
+        fprintf(['\nFtldeL: The FIM estimate based on log-likelihood '...
+            'measurements by using Das et al 2010.\n']), FtldeL
+        switch lower(measurement)
+            case 'both'
+                fprintf(['\nFtldeg: The FIM estimate based on gradient vector '...
+                    'measurements by using Das et al 2010.\n']), Ftldeg
+        end
+end
+##### SOURCE END #####
+--></body></html>
