@@ -1,6 +1,6 @@
 # Source provenance and reuse
 
-This repository contains Youngjoo Kim's MATLAB terrain-navigation simulations associated with the [APISAT 2017 paper](../README.md#citation). The documentation describes the source at [`fd7df2f`](https://github.com/rhymesg/MC_CRB_nonGaussian/tree/fd7df2f1899965aee68adc1c58ce78a3d5e8d77e); no scientific reproduction result is recorded.
+This repository contains Youngjoo Kim's MATLAB terrain-navigation simulations associated with the [APISAT 2017 paper](../README.md#citation). The historical baseline is [`fd7df2f`](https://github.com/rhymesg/MC_CRB_nonGaussian/tree/fd7df2f1899965aee68adc1c58ce78a3d5e8d77e); current log densities are evaluated directly to avoid density underflow. No scientific reproduction result is recorded.
 
 ## Source relationships
 

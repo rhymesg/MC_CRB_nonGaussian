@@ -5,14 +5,13 @@ function [ L ] = loglikelihood_TRN( Z_est, Z , sig_Z, Dist )
 if (Dist == 0) % Gaussian
     var = sig_Z^2;
 
-    p = (1/sqrt(2*pi*var)) * exp( -(Z - Z_est)^2/(2*var) );
+    L = -0.5*log(2*pi*var) - (Z - Z_est)^2/(2*var);
 else
     b = sig_Z/sqrt(2);
     
-    p = (1/(2*b)) * exp( -abs(Z - Z_est)/b);
+    L = -log(2*b) - abs(Z - Z_est)/b;
     
 end
 
-L = log(p);
 end
 

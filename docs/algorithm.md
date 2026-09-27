@@ -17,7 +17,7 @@ For residual `r = Z - Z_est` and `σ = sig_Z`, the intended log densities are:
 - Gaussian: `−log(σ√(2π)) − r²/(2σ²)`.
 - Laplace: `−log(2b) − |r|/b`, where `b = σ/√2`.
 
-The helper computes the density first and then takes `log`; extreme residuals can underflow to `-Inf`. Inputs are not comprehensively validated, and the scalar likelihood's matrix-power operators must not be treated as a vectorized API.
+The helper evaluates these log densities directly, avoiding underflow caused by taking the logarithm of a computed density. Extremely large residuals may still overflow their squared value. Inputs are not comprehensively validated, and the scalar likelihood's matrix-power operators must not be treated as a vectorized API.
 
 ## Simulation entry points
 
@@ -41,7 +41,8 @@ In the independent-position script, `J = 1/(sig²+sig_p²) + FIM`. In the recurs
 
 ## Numerical interpretation and adaptation
 
-- Recursive state sampling uses `prior = inv(J)*randn(1,L)`: the multiplier is inverse information, rather than its square root. Preserve this distinction when translating; changing it changes the experiment.
+- Recursive state sampling uses `prior = inv(J)*randn(1,L)`: inverse information is a variance, so this is not a standard-deviation scale. A posterior draw would use `sqrt(1/J)`; a predictive draw would use `sqrt(1/J+sig_p^2)`. The averaging distribution is unresolved, so the experiment needs that model decision before a reliable bound comparison.
+- The particle filter adds shared and per-particle process perturbations, while the information prediction adds only one `sig_p^2`. Resolve that stochastic-model mismatch before interpreting RMSE against a bound.
 - Laplace log density has a cusp at zero residual; finite-difference Hessian estimates depend on perturbation sizes and sampled residuals. Absolute-value correction of negative estimates is an implementation choice, not evidence of an unbiased FIM estimate.
 - Particle weights are products of densities without log-space normalization; zero total weight can produce `NaN` values.
 - Internal `rng('shuffle')` calls prevent a caller-supplied seed from fixing the full run. A repeatable adaptation needs controlled random draws throughout, and matching seeds across languages does not imply matching samples.
@@ -49,3 +50,5 @@ In the independent-position script, `J = 1/(sig²+sig_p²) + FIM`. In the recurs
 - Compare a translation first against the [deterministic helper example](../README.md#usage), then against intermediate likelihood and Hessian calculations using identical supplied random draws. Full simulation curves have no recorded reference values or justified comparison tolerances here.
 
 The [related toolkit](https://github.com/rhymesg/information-based-tracking) uses score outer products for Monte Carlo information. That alternative and these approximate recursive updates must not be assumed interchangeable or established as an exact Bayesian bound for arbitrary non-Gaussian models.
+
+[Log-density regression checks](../tests/integration/likelihood/README.md) cover central and far-tail Gaussian and Laplace values. Native MATLAB execution and the full stochastic experiment remain unverified.

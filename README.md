@@ -55,6 +55,8 @@ Expected values, derived from the helper formulas: `height = [70, 82, 70]`, Gaus
 
 ## Development
 
+Run the [Gaussian and Laplace log-density regression checks](tests/integration/likelihood/README.md) before changing the corresponding numerical routines.
+
 There is no automated test suite or CI configuration. The deterministic example above checks helper behavior, not the paper's simulation results; native MATLAB and Octave execution remain unverified.
 
 Report problems through [GitHub Issues](https://github.com/rhymesg/MC_CRB_nonGaussian/issues), including the script, parameter changes, MATLAB version, and error or unexpected output. The scripts call `rng('shuffle')` internally, so setting a seed before running them does not make the full simulation repeatable.
