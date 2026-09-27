@@ -6,7 +6,9 @@ MATLAB simulations of Monte Carlo Fisher information matrix (FIM) estimation and
 
 The [canonical repository](https://github.com/rhymesg/MC_CRB_nonGaussian) accompanies the [APISAT 2017 paper](#citation). Compare a linearized measurement-information calculation with a simultaneous-perturbation, log-likelihood Hessian estimate and particle-filter RMSE.
 
-For reusable measurement models, information prediction, and a **score-based** Monte Carlo estimator, see [information-based-tracking](https://github.com/rhymesg/information-based-tracking). Its [estimator](https://github.com/rhymesg/information-based-tracking/blob/main/monte_carlo_information.m) uses score outer products; it does not reproduce this repository's perturbation estimator or recursive navigation simulation.
+For reusable measurement models, information prediction, and a **score-based** Monte Carlo estimator, see [information-based-tracking](https://github.com/rhymesg/information-based-tracking). Its [estimator](https://github.com/rhymesg/information-based-tracking/blob/main/monte_carlo_information.m) uses score outer products, providing a complementary information-estimation approach.
+
+For Python, C++, or other-language implementations, use the [algorithm and translation reference](docs/algorithm.md) to follow the likelihood formulas, array contracts, and information-update order.
 
 ## Method
 
@@ -22,7 +24,7 @@ Estimate measurement information in two ways: a local linearized model and a Mon
 | Scalar Gaussian/Laplace log likelihood | [loglikelihood_TRN.m](loglikelihood_TRN.m) |
 | Laplace sampling with a standard-deviation parameter | [laprnd.m](laprnd.m) |
 
-The [algorithm reference](docs/algorithm.md) documents inputs, update order, numerical limitations, and translation considerations for Python or C++ readers. This repository supplies MATLAB source, without ports or language bindings.
+The [algorithm reference](docs/algorithm.md) documents the MATLAB inputs, update order, and numerical conventions.
 
 ## Examples
 
@@ -57,7 +59,7 @@ Expected values, derived from the helper formulas: `height = [70, 82, 70]`, Gaus
 
 ## Implementation scope
 
-The helper routines expose terrain measurements, log likelihoods, and Laplace sampling. The recursive experiment has [prior-sampling and process-model inconsistencies](docs/algorithm.md) that need resolution before its curves can be interpreted as valid recursive bounds.
+The helper routines expose terrain measurements, Gaussian/Laplace log likelihoods, and Laplace sampling. The simulation scripts show particle-filter and information-recursion calculations; [calculation details](docs/algorithm.md) connect their formulas, parameters, and source behavior.
 
 ### Checks
 
@@ -67,7 +69,7 @@ Run the focused [Gaussian/Laplace log-density checks](tests/integration/likeliho
 matlab -batch "addpath('tests/integration/likelihood'); verify_likelihood"
 ```
 
-The full simulations call `rng('shuffle')` internally; setting a seed before running them does not make them repeatable.
+The full simulations initialize random streams with `rng('shuffle')` inside their loops; control those calls when constructing a repeatable experiment.
 
 ## Citation
 
@@ -75,7 +77,7 @@ Please cite the related paper when using its method:
 
 Youngjoo Kim and Hyochoong Bang. “Monte-Carlo Calculation of Cramer-Rao Bound for non-Gaussian Recursive Filtering.” *2017 Asia-Pacific International Symposium on Aerospace Technology* (APISAT), 2017.
 
-[CITATION.cff](CITATION.cff) provides machine-readable metadata. Publication details are retained from the original author README; no paper DOI or full-text link has been verified.
+[CITATION.cff](CITATION.cff) provides machine-readable metadata. Publication details follow the original author README.
 
 ## License and provenance
 
