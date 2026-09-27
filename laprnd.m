@@ -6,7 +6,7 @@ function y  = laprnd(m, n, mu, sigma)
 %   [m, n]  : the dimension of y.
 %   Default mu = 0, sigma = 1. 
 %   For more information, refer to
-%   http://en.wikipedia.org./wiki/Laplace_distribution
+%   https://en.wikipedia.org/wiki/Laplace_distribution
 
 %   Author  : Elvis Chen (bee33@sjtu.edu.cn)
 %   Date    : 01/19/07

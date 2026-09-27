@@ -1,6 +1,6 @@
 # Monte Carlo information and terrain-navigation bounds
 
-This reference describes the MATLAB implementation accompanying the [APISAT 2017 paper](../README.md#citation), based on source revision [`fd7df2f`](https://github.com/rhymesg/MC_CRB_nonGaussian/tree/fd7df2f1899965aee68adc1c58ce78a3d5e8d77e). It supports reading and adapting the code; equation-level agreement with the unavailable paper text has not been established.
+This reference describes the MATLAB implementation accompanying the [APISAT 2017 paper](../README.md#citation), based on source revision [`fd7df2f`](https://github.com/rhymesg/MC_CRB_nonGaussian/tree/fd7df2f1899965aee68adc1c58ce78a3d5e8d77e). Use it alongside the [author-uploaded paper](https://www.researchgate.net/publication/321825093_Monte-Carlo_Calculation_of_Cramer-Rao_Bound_for_non-Gaussian_Recursive_Filtering) when reading or adapting the code.
 
 ## Measurement and likelihood contracts
 
@@ -41,14 +41,12 @@ In the independent-position script, `J = 1/(sig²+sig_p²) + FIM`. In the recurs
 
 ## Numerical interpretation and adaptation
 
-- Recursive state sampling uses `prior = inv(J)*randn(1,L)`: inverse information is a variance, so this is not a standard-deviation scale. A posterior draw would use `sqrt(1/J)`; a predictive draw would use `sqrt(1/J+sig_p^2)`. The averaging distribution is unresolved, so the experiment needs that model decision before a reliable bound comparison.
-- The particle filter adds shared and per-particle process perturbations, while the information prediction adds only one `sig_p^2`. Resolve that stochastic-model mismatch before interpreting RMSE against a bound.
-- Laplace log density has a cusp at zero residual; finite-difference Hessian estimates depend on perturbation sizes and sampled residuals. Absolute-value correction of negative estimates is an implementation choice, not evidence of an unbiased FIM estimate.
-- Particle weights are products of densities without log-space normalization; zero total weight can produce `NaN` values.
-- Internal `rng('shuffle')` calls prevent a caller-supplied seed from fixing the full run. A repeatable adaptation needs controlled random draws throughout, and matching seeds across languages does not imply matching samples.
-- Preserve MATLAB's one-based time indexing, row-vector shapes, and multiplication order when translating to Python or C++. The scalar sign/absolute-value operation should not be generalized into a matrix positive-semidefinite projection without a separate derivation.
-- Compare a translation first against the [deterministic helper example](../README.md#examples), then against intermediate likelihood and Hessian calculations using identical supplied random draws. Full simulation curves have no recorded reference values or justified comparison tolerances here.
+The recursive script samples states with `prior = inv(J)*randn(1,L)`. This uses inverse information as the sample scale. For a model-defined posterior or predictive Gaussian draw, derive the standard deviation from the chosen covariance (`sqrt(1/J)` or `sqrt(1/J+sig_p^2)`, respectively) before modifying that experiment.
 
-The [related toolkit](https://github.com/rhymesg/information-based-tracking) uses score outer products for Monte Carlo information. That alternative and these approximate recursive updates must not be assumed interchangeable or established as an exact Bayesian bound for arbitrary non-Gaussian models.
+The particle simulation uses shared and per-particle process perturbations; its information prediction adds one `sig_p^2`. Match the process-noise covariance and averaging distribution when designing an RMSE/bound comparison.
 
-[Log-density regression checks](../tests/integration/likelihood/README.md) cover central and far-tail Gaussian and Laplace values.
+Laplace density has a cusp at zero residual. The finite-difference estimator depends on perturbation sizes and samples; the source maps negative scalar information estimates to their absolute values. This is a scalar estimator convention, not a matrix projection.
+
+Likelihood products require positive finite normalization totals. For repeatable comparisons, control the internal `rng('shuffle')` calls and supply identical random samples across translations. Preserve one-based time indexing, row-vector shapes, and multiplication order.
+
+Start with the [deterministic helper example](../README.md#examples) and [log-density regression checks](../tests/integration/likelihood/README.md), then compare intermediate likelihood and Hessian calculations. The [related toolkit](https://github.com/rhymesg/information-based-tracking) provides a separate score-outer-product estimator for conditional observation information.

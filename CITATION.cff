@@ -25,6 +25,7 @@ preferred-citation:
       given-names: Hyochoong
   collection-title: 2017 Asia-Pacific International Symposium on Aerospace Technology
   year: 2017
+  url: https://www.researchgate.net/publication/321825093_Monte-Carlo_Calculation_of_Cramer-Rao_Bound_for_non-Gaussian_Recursive_Filtering
 references:
   - type: article
     title: Efficient Monte Carlo computation of Fisher information matrix using prior information

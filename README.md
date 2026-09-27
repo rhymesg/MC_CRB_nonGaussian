@@ -73,9 +73,11 @@ The full simulations initialize random streams with `rng('shuffle')` inside thei
 
 ## Citation
 
+For academic attribution, please acknowledge this repository when adapting its code or examples.
+
 Please cite the related paper when using its method:
 
-Youngjoo Kim and Hyochoong Bang. “Monte-Carlo Calculation of Cramer-Rao Bound for non-Gaussian Recursive Filtering.” *2017 Asia-Pacific International Symposium on Aerospace Technology* (APISAT), 2017.
+Youngjoo Kim and Hyochoong Bang. “Monte-Carlo Calculation of Cramer-Rao Bound for non-Gaussian Recursive Filtering.” *2017 Asia-Pacific International Symposium on Aerospace Technology* (APISAT), 2017. [Author-uploaded paper](https://www.researchgate.net/publication/321825093_Monte-Carlo_Calculation_of_Cramer-Rao_Bound_for_non-Gaussian_Recursive_Filtering).
 
 [CITATION.cff](CITATION.cff) provides machine-readable metadata. Publication details follow the original author README.
 
