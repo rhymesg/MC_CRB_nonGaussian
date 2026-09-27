@@ -47,7 +47,7 @@ In the independent-position script, `J = 1/(sig²+sig_p²) + FIM`. In the recurs
 - Particle weights are products of densities without log-space normalization; zero total weight can produce `NaN` values.
 - Internal `rng('shuffle')` calls prevent a caller-supplied seed from fixing the full run. A repeatable adaptation needs controlled random draws throughout, and matching seeds across languages does not imply matching samples.
 - Preserve MATLAB's one-based time indexing, row-vector shapes, and multiplication order when translating to Python or C++. The scalar sign/absolute-value operation should not be generalized into a matrix positive-semidefinite projection without a separate derivation.
-- Compare a translation first against the [deterministic helper example](../README.md#usage), then against intermediate likelihood and Hessian calculations using identical supplied random draws. Full simulation curves have no recorded reference values or justified comparison tolerances here.
+- Compare a translation first against the [deterministic helper example](../README.md#examples), then against intermediate likelihood and Hessian calculations using identical supplied random draws. Full simulation curves have no recorded reference values or justified comparison tolerances here.
 
 The [related toolkit](https://github.com/rhymesg/information-based-tracking) uses score outer products for Monte Carlo information. That alternative and these approximate recursive updates must not be assumed interchangeable or established as an exact Bayesian bound for arbitrary non-Gaussian models.
 

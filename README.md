@@ -8,23 +8,25 @@ The [canonical repository](https://github.com/rhymesg/MC_CRB_nonGaussian) accomp
 
 For reusable measurement models, information prediction, and a **score-based** Monte Carlo estimator, see [information-based-tracking](https://github.com/rhymesg/information-based-tracking). Its [estimator](https://github.com/rhymesg/information-based-tracking/blob/main/monte_carlo_information.m) uses score outer products; it does not reproduce this repository's perturbation estimator or recursive navigation simulation.
 
-## Installation
+## Method
 
-Clone the repository:
+Estimate measurement information in two ways: a local linearized model and a Monte Carlo finite-difference Hessian of the log likelihood. The scripts combine these calculations with a one-dimensional terrain particle filter to compare uncertainty bounds and estimation error.
 
-```bash
-git clone https://github.com/rhymesg/MC_CRB_nonGaussian.git
-```
+### Implementation reference
 
-Enter its directory:
+| Purpose | Source |
+|---|---|
+| Recursive particle filter and information prediction/update | [main_TRN_1d_recur.m](main_TRN_1d_recur.m) |
+| Independent-position particle estimates and bound comparison | [main_TRN_1d.m](main_TRN_1d.m) |
+| Synthetic sinusoidal terrain measurement | [meas_TRN_1d.m](meas_TRN_1d.m) |
+| Scalar Gaussian/Laplace log likelihood | [loglikelihood_TRN.m](loglikelihood_TRN.m) |
+| Laplace sampling with a standard-deviation parameter | [laprnd.m](laprnd.m) |
 
-```bash
-cd MC_CRB_nonGaussian
-```
+The [algorithm reference](docs/algorithm.md) documents inputs, update order, numerical limitations, and translation considerations for Python or C++ readers. This repository supplies MATLAB source, without ports or language bindings.
 
-Use MATLAB with this directory as the current folder. The scripts use base MATLAB functions and synthetic terrain; no dataset or additional toolbox is required by the source. No minimum MATLAB release or Octave compatibility has been established; shell commands below require MATLAB's `-batch` option.
+## Examples
 
-## Usage
+Run from the repository root in MATLAB. The source uses base MATLAB and synthetic terrain; no additional toolbox or dataset is needed. Shell commands require MATLAB's `-batch` option.
 
 Run the recursive particle-filter and bound example:
 
@@ -53,25 +55,19 @@ laplace_log_density = loglikelihood_TRN(70, 70, 2, 1)
 
 Expected values, derived from the helper formulas: `height = [70, 82, 70]`, Gaussian log density approximately `-1.6120857138`, and Laplace log density approximately `-1.0397207708`.
 
-## Development
+## Implementation scope
 
-Run the [Gaussian and Laplace log-density regression checks](tests/integration/likelihood/README.md) before changing the corresponding numerical routines.
+The helper routines expose terrain measurements, log likelihoods, and Laplace sampling. The recursive experiment has [prior-sampling and process-model inconsistencies](docs/algorithm.md) that need resolution before its curves can be interpreted as valid recursive bounds. Native MATLAB execution remains unverified.
 
-There is no automated test suite or CI configuration. The deterministic example above checks helper behavior, not the paper's simulation results; native MATLAB and Octave execution remain unverified.
+### Checks
 
-Report problems through [GitHub Issues](https://github.com/rhymesg/MC_CRB_nonGaussian/issues), including the script, parameter changes, MATLAB version, and error or unexpected output. The scripts call `rng('shuffle')` internally, so setting a seed before running them does not make the full simulation repeatable.
+Run the focused [Gaussian/Laplace log-density checks](tests/integration/likelihood/README.md):
 
-## Implementation reference
+```bash
+matlab -batch "addpath('tests/integration/likelihood'); verify_likelihood"
+```
 
-| Purpose | Source |
-|---|---|
-| Recursive particle filter and information prediction/update | [main_TRN_1d_recur.m](main_TRN_1d_recur.m) |
-| Independent-position particle estimates and bound comparison | [main_TRN_1d.m](main_TRN_1d.m) |
-| Synthetic sinusoidal terrain measurement | [meas_TRN_1d.m](meas_TRN_1d.m) |
-| Scalar Gaussian/Laplace log likelihood | [loglikelihood_TRN.m](loglikelihood_TRN.m) |
-| Laplace sampling with a standard-deviation parameter | [laprnd.m](laprnd.m) |
-
-The [algorithm reference](docs/algorithm.md) documents inputs, update order, numerical limitations, and translation considerations for Python or C++ readers. This repository supplies MATLAB source, without ports or language bindings.
+The full simulations call `rng('shuffle')` internally; setting a seed before running them does not make them repeatable.
 
 ## Citation
 
