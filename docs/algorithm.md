@@ -51,4 +51,4 @@ In the independent-position script, `J = 1/(sig²+sig_p²) + FIM`. In the recurs
 
 The [related toolkit](https://github.com/rhymesg/information-based-tracking) uses score outer products for Monte Carlo information. That alternative and these approximate recursive updates must not be assumed interchangeable or established as an exact Bayesian bound for arbitrary non-Gaussian models.
 
-[Log-density regression checks](../tests/integration/likelihood/README.md) cover central and far-tail Gaussian and Laplace values. Native MATLAB execution and the full stochastic experiment remain unverified.
+[Log-density regression checks](../tests/integration/likelihood/README.md) cover central and far-tail Gaussian and Laplace values.

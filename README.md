@@ -57,7 +57,7 @@ Expected values, derived from the helper formulas: `height = [70, 82, 70]`, Gaus
 
 ## Implementation scope
 
-The helper routines expose terrain measurements, log likelihoods, and Laplace sampling. The recursive experiment has [prior-sampling and process-model inconsistencies](docs/algorithm.md) that need resolution before its curves can be interpreted as valid recursive bounds. Native MATLAB execution remains unverified.
+The helper routines expose terrain measurements, log likelihoods, and Laplace sampling. The recursive experiment has [prior-sampling and process-model inconsistencies](docs/algorithm.md) that need resolution before its curves can be interpreted as valid recursive bounds.
 
 ### Checks
 
