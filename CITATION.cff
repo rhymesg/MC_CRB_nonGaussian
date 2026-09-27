@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: Please cite the paper in preferred-citation when using its method.
+title: MC_CRB_nonGaussian
+type: software
+authors:
+  - family-names: Kim
+    given-names: Youngjoo
+repository-code: https://github.com/rhymesg/MC_CRB_nonGaussian
+license: MIT
+keywords:
+  - Fisher information
+  - Cramer-Rao bound
+  - Monte Carlo
+  - non-Gaussian recursive filtering
+  - terrain-referenced navigation
+  - simultaneous perturbation
+  - MATLAB
+preferred-citation:
+  type: conference-paper
+  title: Monte-Carlo Calculation of Cramer-Rao Bound for non-Gaussian Recursive Filtering
+  authors:
+    - family-names: Kim
+      given-names: Youngjoo
+    - family-names: Bang
+      given-names: Hyochoong
+  collection-title: 2017 Asia-Pacific International Symposium on Aerospace Technology
+  year: 2017
+references:
+  - type: article
+    title: Efficient Monte Carlo computation of Fisher information matrix using prior information
+    authors:
+      - family-names: Das
+        given-names: Sonjoy
+      - family-names: Spall
+        given-names: James C.
+      - family-names: Ghanem
+        given-names: Roger
+    journal: Computational Statistics & Data Analysis
+    volume: '54'
+    issue: '2'
+    start: 272
+    end: 289
+    year: 2010
+    doi: 10.1016/j.csda.2009.09.018

@@ -1,6 +1,6 @@
 function [ L ] = loglikelihood_TRN( Z_est, Z , sig_Z, Dist )
-%LOGLIKELIHOOD_TRN 이 함수의 요약 설명 위치
-%   자세한 설명 위치
+%LOGLIKELIHOOD_TRN Scalar Gaussian or Laplace observation log density.
+% Inputs and numerical limitations: docs/algorithm.md#measurement-and-likelihood-contracts
 
 if (Dist == 0) % Gaussian
     var = sig_Z^2;

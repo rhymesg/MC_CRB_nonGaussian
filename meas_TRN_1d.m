@@ -1,6 +1,6 @@
 function [ h ] = meas_TRN_1d( x )
-%MEAS_TRN_1D 이 함수의 요약 설명 위치
-%   sine function
+%MEAS_TRN_1D Synthetic sinusoidal terrain height for position x.
+% Model and units: docs/algorithm.md#measurement-and-likelihood-contracts
 
     Off = 70;
     Amp = 12;

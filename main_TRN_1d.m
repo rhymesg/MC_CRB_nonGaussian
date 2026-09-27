@@ -1,3 +1,6 @@
+% Monte Carlo FIM / CRB: docs/algorithm.md; APISAT paper and citation:
+% https://github.com/rhymesg/MC_CRB_nonGaussian#citation
+
 % Author: Youngjoo Kim
 % Y. Kim and H. Bang, "Monte-Carlo Calculation of Cramer-Rao Bound for non-Gaussian Recursive
 % Filtering", APISAT, 2017.
